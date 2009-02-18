@@ -28,7 +28,7 @@ __prompt_command() {
 		fi
 		sub_dir=$(git rev-parse --show-prefix)
 		sub_dir="/${sub_dir%/}"
-    ref=$(parse_git_branch)
+		ref=$(parse_git_branch)
 		vcs="git"
 		alias pull="git pull"
 		alias commit="git commit -v -a"
@@ -66,8 +66,21 @@ __prompt_command() {
 		alias revert="bzr revert"
 	}
 	
-
-	git_dir || svn_dir || bzr_dir
+	  svk_dir() {
+	    [ -f ~/.svk/config ] || return 1
+	    base_dir=$(awk '/: *$/ { sub(/^ */,"",$0); sub(/: *$/,"",$0); if (match("'${PWD}'", $0"(/|$)")) { print $0; d=1; } } /depotpath/ && d == 1 { sub(".*/","",$0); r=$0 } /revision/ && d == 1 { print r ":" $2; exit 1 }' ~/.svk/config) && return 1
+	    ref=${base_dir##*
+}
+	    base_dir=${base_dir%%
+*}
+		sub_dir=$(sub_dir "${base_dir}")
+		vcs="svk"
+		alias pull="svk pull"
+		alias commit="svk commit"
+		alias push="svk push"
+	}
+	
+	git_dir || svn_dir || svk_dir || bzr_dir
 
 	if [ -n "$vcs" ]; then
 		alias st="$vcs status"
@@ -75,7 +88,7 @@ __prompt_command() {
 		alias up="pull"
 		alias cdb="cd $base_dir"
 		base_dir="$(basename "${base_dir}")"
-    working_on="$base_dir:"
+		working_on="$base_dir:"
 		__vcs_prefix="($vcs)"
 		__vcs_ref="[$ref]"
 		__vcs_sub_dir="${sub_dir}"
